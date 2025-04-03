@@ -68,7 +68,7 @@ Mining Segmentation basic design and Python 3 source code.
 
 Project folder: "block_segmentation".
 
-Start Master in terminal for local tests:
+Start Master in terminal for local test:
 
                      python3 master.py
 
