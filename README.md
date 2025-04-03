@@ -60,7 +60,7 @@ Worker Nodes:
 
 ### Base design structure
 
-Mining Segmentation basic design and Python source code.
+Mining Segmentation basic design and Python 3 source code.
 
                       /block_segmentation/
                       ├── master.py      # Master Node
