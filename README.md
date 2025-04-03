@@ -67,3 +67,19 @@ Mining Segmentation basic design and Python 3 source code.
                       └── worker.py      # Miner Node
 
 Project folder: "block_segmentation".
+
+Start Master in terminal for local tests:
+
+                     python3 master.py
+
+Start Workers in different terminals:
+
+                     python3 worker.py
+
+Upcoming extensions:
+
+- AI to assign segments (based on historical speed)
+- Security over sockets (e.g., TLS or SSH tunnel)
+- Reconnection and fault tolerance
+- Web dashboard for live mining monitoring
+- P2P support instead of centralized architecture
