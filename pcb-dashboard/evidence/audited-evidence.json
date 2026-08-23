@@ -1,0 +1,40 @@
+{
+  "source": "Server A /var/log/hashburst/master.log supplied 2026-08-13",
+  "audited_at": "2026-08-13T13:36:48Z",
+  "pcb_pool_accepted_total": 3,
+  "pcb_exact_target64_accepted": 2,
+  "legacy_randomx_accepted": 1,
+  "events": [
+    {
+      "ts": "11:45:50.646",
+      "worker": "poc-board-1",
+      "job_id": "111576",
+      "nonce": "39a50700",
+      "result": "bb185dbd7feccf5c54b5ad772bba0304da398d6d0b7ff3631e30bd2ca5020000",
+      "pool_status": "OK",
+      "proof_level": "legacy-randomx-accepted"
+    },
+    {
+      "ts": "13:07:07.605",
+      "worker": "poc-board-1",
+      "job_id": "188178",
+      "nonce": "23a50700",
+      "result": "4fe715854b0153e221695a19a631769932ca19a931e6825a7914bf371e080000",
+      "target64": 38427114278264,
+      "hash_tail64": 8925877310585,
+      "pool_status": "OK",
+      "proof_level": "exact-target64-accepted"
+    },
+    {
+      "ts": "13:15:42.555",
+      "worker": "poc-board-1",
+      "job_id": "188229",
+      "nonce": "75a30700",
+      "result": "28bb65df36f841eff9da0c5056e487d90c6ccdae7539d19026c5367dd0220000",
+      "target64": 38427114278264,
+      "hash_tail64": 38278849283366,
+      "pool_status": "OK",
+      "proof_level": "exact-target64-accepted"
+    }
+  ]
+}

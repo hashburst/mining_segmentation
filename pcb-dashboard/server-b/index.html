@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HashBurst DePIN - PoC Stagenet Dashboard | mlmultiservices.com</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,700;1,400&family=IBM+Plex+Sans:wght@300;400;600&display=swap');
+
+:root {
+  --bg:       #080b0f;
+  --surface:  #0e1318;
+  --raise:    #141b22;
+  --border:   #1c2530;
+  --dim:      #253040;
+  --text:     #b8cad8;
+  --muted:    #4a6070;
+  --gold:     #e0a020;
+  --green:    #27ae60;
+  --blue:     #3a8ee0;
+  --red:      #c0392b;
+  --purple:   #8e44ad;
+  --orange:   #e67e22;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+*  { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+/* ── Top bar ─────────────────────────────────────────── */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 44px;
+}
+.brand {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+.brand span { color: var(--text); font-weight: 400; }
+.badges { display: flex; gap: 8px; align-items: center; }
+.badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 2px 8px;
+  border-radius: 2px;
+}
+.badge-net  {
+  background: rgba(224,160,32,0.1);
+  border: 1px solid rgba(224,160,32,0.3);
+  color: var(--gold);
+}
+.badge-poc  {
+  background: rgba(58,142,224,0.1);
+  border: 1px solid rgba(58,142,224,0.3);
+  color: var(--blue);
+}
+.indicator {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--red);
+  display: inline-block;
+  margin-right: 6px;
+}
+.indicator.on { background: var(--green); animation: blink 2s ease infinite; }
+@keyframes blink { 50% { opacity: 0.3; } }
+
+/* ── Notice bar ─────────────────────────────────────── */
+.notice {
+  background: rgba(224,160,32,0.06);
+  border-bottom: 1px solid rgba(224,160,32,0.2);
+  padding: 8px 20px;
+  font-size: 11.5px;
+  color: var(--text);
+  line-height: 1.6;
+}
+.notice strong { color: var(--gold); font-family: var(--mono); }
+
+/* ── Grid ───────────────────────────────────────────── */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+}
+.full  { grid-column: 1 / -1; }
+.left  { grid-column: 1; }
+.right { grid-column: 2; }
+
+/* ── Panel ──────────────────────────────────────────── */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.panel-hdr {
+  background: var(--raise);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.panel-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.panel-sub {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+}
+.panel-body { padding: 12px; }
+
+/* ── Metrics row ────────────────────────────────────── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  margin: 12px 12px 0;
+}
+.metric {
+  background: var(--surface);
+  padding: 12px 14px;
+}
+.m-val {
+  font-family: var(--mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+.m-val.green  { color: var(--green); }
+.m-val.blue   { color: var(--blue); }
+.m-val.purple { color: var(--purple); }
+.m-val.trend-up { font-size:22px; }
+.m-val.trend-zero { font-size:22px; }
+.delta-symbol {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 4px;
+  vertical-align: -1px;
+}
+.delta-symbol.accepted {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 9px solid var(--green);
+}
+.delta-symbol.rejected {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 9px solid var(--red);
+}
+.m-trend-note { margin-top:2px; font-family:var(--mono); font-size:8px; color:var(--muted); letter-spacing:.02em; }
+.m-label {
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 3px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── PCB boards ─────────────────────────────────────── */
+.boards-row {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  padding: 12px;
+}
+.board-unit { display: flex; flex-direction: column; align-items: center; }
+.board-caption {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+  margin-top: 6px;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* ── Protocol log ────────────────────────────────────── */
+.plog {
+  height: 320px;
+  overflow-y: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  background: #050709;
+  padding: 6px;
+}
+.plog::-webkit-scrollbar { width: 3px; }
+.plog::-webkit-scrollbar-thumb { background: var(--dim); }
+
+.plog-row {
+  display: grid;
+  grid-template-columns: 88px 72px 56px 90px 1fr;
+  gap: 6px;
+  padding: 3px 5px;
+  border-bottom: 1px solid rgba(28,37,48,0.6);
+  align-items: baseline;
+  animation: fadein 0.25s ease;
+}
+@keyframes fadein {
+  from { background: rgba(224,160,32,0.07); }
+  to   { background: transparent; }
+}
+.plog-ts    { color: var(--muted); }
+.plog-board { color: var(--blue); }
+.plog-tx    { color: var(--gold); }
+.plog-rx    { color: var(--green); }
+.plog-type  { font-weight: 500; }
+.t-REGISTER { color: var(--purple); }
+.t-JOB      { color: var(--blue); }
+.t-SHARE    { color: var(--green); }
+.t-HEARTBEAT{ color: var(--muted); font-style: italic; }
+.t-ACK      { color: var(--dim); }
+.t-STATS    { color: var(--muted); }
+.plog-payload {
+  color: var(--text);
+  opacity: 0.65;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+.plog-payload:hover {
+  opacity: 1;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: rgba(20,27,34,0.8);
+}
+
+/* ── Packet inspector ────────────────────────────────── */
+.inspector {
+  background: #050709;
+  padding: 10px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+.irow {
+  display: flex;
+  gap: 10px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(28,37,48,0.5);
+}
+.irow:last-child { border: none; }
+.ikey  { color: var(--muted); width: 110px; flex-shrink: 0; }
+.ival  { color: var(--text); word-break: break-all; }
+.ival.hex    { color: var(--gold); }
+.ival.json   { color: var(--blue); }
+.ival.green  { color: var(--green); }
+
+/* ── Hex dump ────────────────────────────────────────── */
+.hexdump {
+  background: #050709;
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 8px 10px;
+  color: var(--muted);
+  overflow-x: auto;
+  white-space: pre;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+}
+.hexdump .magic  { color: var(--gold);   font-weight: 700; }
+.hexdump .type   { color: var(--purple); font-weight: 700; }
+.hexdump .length { color: var(--blue); }
+.hexdump .body   { color: var(--text); }
+
+/* ── Stratum log ─────────────────────────────────────── */
+.slog {
+  height: 240px;
+  overflow-y: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  background: #050709;
+  padding: 6px;
+}
+.slog::-webkit-scrollbar { width: 3px; }
+.srow {
+  padding: 3px 5px;
+  border-bottom: 1px solid rgba(28,37,48,0.5);
+  line-height: 1.5;
+  word-break: break-all;
+}
+.srow.tx { color: var(--gold); }
+.srow.rx { color: var(--green); }
+
+/* ── Config table ────────────────────────────────────── */
+.cfg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.cfg-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+.cfg-table td:first-child { color: var(--muted); width: 140px; white-space: nowrap; }
+.cfg-table td:last-child  { color: var(--gold); }
+.cfg-table td .url  { color: var(--blue); }
+.cfg-table td .ok   { color: var(--green); }
+.cfg-table td .off  { color: var(--dim); }
+
+/* ── Architecture SVG ────────────────────────────────── */
+.arch-wrap { padding: 8px; background: #050709; }
+
+/* ── Footer ──────────────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  color: var(--muted);
+  font-family: var(--mono);
+}
+.footer a { color: var(--muted); text-decoration: none; }
+</style>
+
+<style>
+.private-metrics{grid-template-columns:repeat(6,minmax(120px,1fr));}
+.private-metrics .metric{min-height:86px;}
+.boards-row{gap:20px;}
+.board-unit{min-height:360px;}
+.board-unit svg{width:100%;height:auto;max-height:430px;}
+.logbox,.tep-log,.stratum-log{min-height:320px;max-height:520px;}
+.notice{font-size:11px;line-height:1.45;padding:8px 14px;}
+.footer{font-size:10px;justify-content:center;}
+@media(max-width:1100px){.private-metrics{grid-template-columns:repeat(3,1fr);}}
+</style>
+
+<style>
+.verify-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.verify-item{display:flex;justify-content:space-between;gap:12px;align-items:center;background:#080b0f;border:1px solid var(--border);padding:7px 9px;font-family:var(--mono);font-size:10.5px;}
+.verify-name{color:var(--muted)} .vstate{font-weight:700;letter-spacing:.06em}.v-pass{color:var(--green)}.v-wait{color:var(--gold)}.v-fail{color:var(--red)}
+.proof-grid{display:grid;grid-template-columns:120px 1fr;gap:4px 8px;font-family:var(--mono);font-size:10.5px}.proof-k{color:var(--muted)}.proof-v{color:var(--text);word-break:break-all}.proof-v.gold{color:var(--gold)}.proof-v.green{color:var(--green)}
+.chain{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:10px;overflow-x:auto;overflow-y:hidden}.chain-node{box-sizing:border-box;width:132px;min-width:132px;height:82px;max-height:82px;text-align:center;border:1px solid var(--border);background:#080b0f;padding:9px 7px;font-family:var(--mono);font-size:10px;overflow:hidden;display:flex;flex-direction:column;justify-content:center}.chain-title{display:block;font-weight:700;letter-spacing:.04em;white-space:nowrap}.chain-detail{display:block;margin-top:7px;line-height:1.25;height:28px;max-height:28px;overflow:auto;overflow-wrap:anywhere;scrollbar-width:thin}.chain-node.pass{border-color:rgba(39,174,96,.6);box-shadow:0 0 10px rgba(39,174,96,.08)}.chain-node.wait{border-color:rgba(224,160,32,.35)}.chain-arrow{color:var(--muted);font-family:var(--mono)}
+.event-stream{height:280px;overflow:auto;background:#050709;font-family:var(--mono);font-size:10.5px;padding:5px}.event-row{display:grid;grid-template-columns:86px 120px 1fr;gap:7px;padding:4px 5px;border-bottom:1px solid rgba(28,37,48,.55)}.event-ts{color:var(--muted)}.event-kind{color:var(--blue);font-weight:700}.event-kind.share,.event-kind.accepted{color:var(--green)}.event-kind.rejected{color:var(--red)}.event-json{color:var(--text);opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}.event-json.open{white-space:pre-wrap;word-break:break-all;opacity:1}
+.seg-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.seg-card{background:#080b0f;border:1px solid var(--border);padding:9px;font-family:var(--mono);font-size:10.5px}.seg-card strong{color:var(--blue)}
+@media(max-width:900px){.verify-grid,.seg-grid{grid-template-columns:1fr}.chain{justify-content:flex-start}.event-row{grid-template-columns:70px 90px 1fr}}
+</style>
+</head>
+<body>
+
+<!-- ── Top bar ─────────────────────────────────────────────── -->
+<div class="topbar">
+  <div class="brand">HashBurst<span>/DePIN</span> TEP-MINER PoC</div>
+  <div class="badges">
+    <span class="badge badge-net">XMR STAGENET</span>
+    <span class="badge badge-poc">PROOF OF CONCEPT</span>
+    <span style="font-family:var(--mono);font-size:10px;">
+      <span class="indicator" id="dot-master"></span>
+      <span id="lbl-master">MASTER OFFLINE</span>
+      &nbsp;&nbsp;
+      <span class="indicator" id="dot-stream"></span>
+      <span id="lbl-stream">TEP STREAM OFFLINE</span>
+    </span>
+  </div>
+</div>
+
+<!-- ── Notice ──────────────────────────────────────────────── -->
+<div class="notice">
+  <strong>STAGENET ONLY - PROOF OF CONCEPT</strong>
+  This dashboard shows real TEP/UDP tunnel exchanges between two TEP-MINER-PoC bitstreams (77.90.188.180) and master node (85.233.199.35).
+  All protocol packets, Stratum JSON-RPC calls and nonce segments are live.
+  Mined coins (stagenet XMR) have no monetary value.
+  Wireshark filter: <strong>udp port 8765 and ip.addr == 85.233.199.35</strong>
+</div>
+
+<!-- ── Metrics ──────────────────────────────────────────────── -->
+<div class="metrics private-metrics">
+  <div class="metric"><div class="m-val" id="m-hash">0.0</div><div class="m-label">H/s RandomX total</div></div>
+  <div class="metric"><div class="m-val green" id="m-shares">0</div><div class="m-label">TEP shares found</div></div>
+  <div class="metric"><div class="m-val green" id="m-accepted">0</div><div class="m-label">experiment accepted <span class="delta-symbol accepted" aria-label="up"></span></div></div>
+  <div class="metric"><div class="m-val" id="m-rejected">0</div><div class="m-label">experiment rejected <span class="delta-symbol rejected" aria-label="down"></span></div></div>
+  <div class="metric"><div class="m-val green" id="m-proof-total">3</div><div class="m-label">audited nodes accepted</div></div>
+  <div class="metric"><div class="m-val green" id="m-proof-exact">2</div><div class="m-label">audited exact PCB accepted</div></div>
+  <div class="metric"><div class="m-val purple" id="m-cluster-workers">0</div><div class="m-label">cluster workers</div></div>
+  <div class="metric"><div class="m-val blue" id="m-workers">0</div><div class="m-label">PCB streams</div></div>
+  <div class="metric"><div class="m-val purple" id="m-uptime">0s</div><div class="m-label">experiment elapsed</div></div>
+  <div class="metric"><div class="m-val green trend-up" id="m-accepted-trend">+0.0%</div><div class="m-label">accepted growth trend</div><div class="m-trend-note" id="m-accepted-trend-note">vs persistent baseline</div></div>
+  <div class="metric"><div class="m-val green trend-zero" id="m-rejected-trend">0.0000%</div><div class="m-label">rejected rate → 0%</div><div class="m-trend-note" id="m-rejected-trend-note">target 0.0000%</div></div>
+</div>
+
+<div class="grid">
+
+  <!-- ── PCB boards ─────────────────────────────────────────── -->
+  <div class="panel full">
+    <div class="panel-hdr">
+      <div class="panel-title">TEP Bitstream Board State</div>
+      <div class="panel-sub">iCE40HX4K + STM32F103 + W5500 | bitstream host: 77.90.188.180</div>
+    </div>
+    <div class="boards-row" id="boards-row"></div>
+  </div>
+
+  <!-- ── Architecture ──────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <div class="panel-title">Live Share-Chain Architecture</div>
+    </div>
+    <div class="arch-wrap">
+      <svg viewBox="0 0 500 210" style="width:100%;height:210px;">
+        <!-- Pool -->
+        <rect x="8" y="75" width="88" height="60" rx="3"
+              fill="rgba(39,174,96,0.06)" stroke="rgba(39,174,96,0.4)" stroke-width="1"/>
+        <text x="52" y="98"  fill="#b8cad8" font-family="monospace" font-size="9" text-anchor="middle">NanoPool</text>
+        <text x="52" y="110" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">stagenet.xmr.pm</text>
+        <text x="52" y="121" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">Stratum :3333</text>
+
+        <!-- Master -->
+        <rect x="178" y="60" width="108" height="80" rx="3"
+              fill="rgba(224,160,32,0.06)" stroke="rgba(224,160,32,0.5)" stroke-width="1"/>
+        <text x="232" y="84"  fill="#e0a020" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">Master Node</text>
+        <text x="232" y="96"  fill="#b8cad8" font-family="monospace" font-size="8" text-anchor="middle">85.233.199.35</text>
+        <text x="232" y="107" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">TEP UDP :8765</text>
+        <text x="232" y="118" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">REST API :9000</text>
+        <text x="232" y="129" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">Stratum proxy</text>
+
+        <!-- Bitstream Host -->
+        <rect x="178" y="155" width="108" height="46" rx="3"
+              fill="rgba(58,142,224,0.06)" stroke="rgba(58,142,224,0.35)" stroke-width="1"/>
+        <text x="232" y="172" fill="#3a8ee0" font-family="monospace" font-size="9" text-anchor="middle">Bitstream Host</text>
+        <text x="232" y="183" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">77.90.188.180</text>
+        <text x="232" y="193" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">WS API :9100</text>
+
+        <!-- Board 1 -->
+        <rect x="380" y="30" width="108" height="55" rx="3"
+              fill="rgba(58,142,224,0.06)" stroke="rgba(58,142,224,0.35)" stroke-width="1"/>
+        <text x="434" y="50"  fill="#b8cad8" font-family="monospace" font-size="9" text-anchor="middle">poc-board-1</text>
+        <text x="434" y="62"  fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">STM32+iCE40+W5500</text>
+        <text x="434" y="73"  fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">UDP src :54200</text>
+
+        <!-- Board 2 -->
+        <rect x="380" y="100" width="108" height="55" rx="3"
+              fill="rgba(58,142,224,0.06)" stroke="rgba(58,142,224,0.35)" stroke-width="1"/>
+        <text x="434" y="120" fill="#b8cad8" font-family="monospace" font-size="9" text-anchor="middle">poc-board-2</text>
+        <text x="434" y="132" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">STM32+iCE40+W5500</text>
+        <text x="434" y="143" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">UDP src :54201</text>
+
+        <!-- Dashboard -->
+        <rect x="380" y="168" width="108" height="38" rx="3"
+              fill="rgba(142,68,173,0.06)" stroke="rgba(142,68,173,0.35)" stroke-width="1"/>
+        <text x="434" y="184" fill="#8e44ad" font-family="monospace" font-size="9" text-anchor="middle">Dashboard</text>
+        <text x="434" y="195" fill="#4a6070" font-family="monospace" font-size="8" text-anchor="middle">mlmultiservices.com</text>
+
+        <!-- Links: pool - master (Stratum TCP) -->
+        <line x1="96" y1="100" x2="178" y2="100"
+              stroke="rgba(39,174,96,0.6)" stroke-width="1.2"
+              stroke-dasharray="5,2"/>
+        <text x="137" y="96" fill="#27ae60" font-family="monospace" font-size="8" text-anchor="middle">Stratum TCP</text>
+
+        <!-- Links: master - board1 (TEP UDP) -->
+        <line x1="286" y1="85" x2="380" y2="58"
+              stroke="rgba(224,160,32,0.6)" stroke-width="1.2"
+              stroke-dasharray="4,2" id="link-b1"/>
+        <!-- Links: master - board2 (TEP UDP) -->
+        <line x1="286" y1="110" x2="380" y2="127"
+              stroke="rgba(224,160,32,0.6)" stroke-width="1.2"
+              stroke-dasharray="4,2" id="link-b2"/>
+        <text x="330" y="82"  fill="#e0a020" font-family="monospace" font-size="8">TEP UDP</text>
+        <text x="330" y="130" fill="#e0a020" font-family="monospace" font-size="8">TEP UDP</text>
+
+        <!-- Bitstream host to board streams -->
+        <line x1="286" y1="178" x2="380" y2="178"
+              stroke="rgba(58,142,224,0.4)" stroke-width="1"
+              stroke-dasharray="2,2"/>
+
+        <!-- Dashboard to bitstream API -->
+        <line x1="434" y1="168" x2="434" y2="155"
+              stroke="rgba(142,68,173,0.5)" stroke-width="1"/>
+        <!-- Dashboard to master API -->
+        <line x1="380" y1="180" x2="286" y2="120"
+              stroke="rgba(142,68,173,0.35)" stroke-width="1"
+              stroke-dasharray="3,3"/>
+        <text x="316" y="162" fill="#8e44ad" font-family="monospace" font-size="7">REST / WS</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── Verification engine ───────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-hdr"><div class="panel-title">Verification Engine</div><div class="panel-sub">independent criteria + live chain state</div></div>
+    <div class="panel-body">
+      <div class="verify-grid">
+        <div class="verify-item"><span class="verify-name">nonce offset 39</span><span id="v-offset" class="vstate v-pass">PASS</span></div>
+        <div class="verify-item"><span class="verify-name">nonce little-endian</span><span id="v-endian" class="vstate v-pass">PASS</span></div>
+        <div class="verify-item"><span class="verify-name">XMRig target64</span><span id="v-target" class="vstate v-pass">PASS</span></div>
+        <div class="verify-item"><span class="verify-name">RandomX live</span><span id="v-randomx" class="vstate v-wait">WAITING</span></div>
+        <div class="verify-item"><span class="verify-name">TEP share</span><span id="v-share" class="vstate v-wait">WAITING</span></div>
+        <div class="verify-item"><span class="verify-name">Stratum submit</span><span id="v-submit" class="vstate v-wait">WAITING</span></div>
+        <div class="verify-item"><span class="verify-name">PCB end-to-end proof</span><span id="v-pcb-proof" class="vstate v-pass">PASS / 2 exact</span></div>
+        <div class="verify-item"><span class="verify-name">master control lane</span><span id="v-control" class="vstate v-wait">WAITING</span></div>
+        <div class="verify-item"><span class="verify-name">pool accepted experiment</span><span id="v-accepted" class="vstate v-wait">WAITING</span></div>
+        <div class="verify-item"><span class="verify-name">pool rejected experiment</span><span id="v-rejected" class="vstate v-pass">0 / CLEAN</span></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Pool qualification / audited evidence ─────────────── -->
+  <div class="panel">
+    <div class="panel-hdr"><div class="panel-title">Pool Qualification / Audited Evidence</div><div class="panel-sub">persistent experiment baseline survives verifier restarts; PCB submission guard only isolates the control-lane pool-path test and does not invalidate the already-proven PCB path</div></div>
+    <div class="panel-body proof-grid">
+      <div class="proof-k">lifetime accepted / rejected</div><div id="q-life" class="proof-v">--</div>
+      <div class="proof-k">experiment accepted / rejected</div><div id="q-session" class="proof-v">--</div>
+      <div class="proof-k">audited nodes accepted</div><div id="q-audited" class="proof-v green">3 total / 2 exact-target64</div>
+      <div class="proof-k">control lane accepted / rejected</div><div id="q-control" class="proof-v">0 / 0</div>
+      <div class="proof-k">control reject %</div><div id="q-control-rej" class="proof-v">0.000000%</div>
+      <div class="proof-k">PCB submission guard</div><div id="q-gate" class="proof-v gold">CONTROL QUALIFYING</div>
+    </div>
+  </div>
+
+  <!-- ── RandomX proof ─────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-hdr"><div class="panel-title">RandomX Proof Sample</div><div class="panel-sub">real hash sample; no extra hashing</div></div>
+    <div class="panel-body proof-grid">
+      <div class="proof-k">job_id</div><div id="proof-job" class="proof-v gold">waiting</div>
+      <div class="proof-k">nonce LE</div><div id="proof-nonce" class="proof-v">--</div>
+      <div class="proof-k">result</div><div id="proof-result" class="proof-v">--</div>
+      <div class="proof-k">hash tail64</div><div id="proof-tail" class="proof-v">--</div>
+      <div class="proof-k">target64</div><div id="proof-target" class="proof-v gold">--</div>
+      <div class="proof-k">comparison</div><div id="proof-compare" class="proof-v">WAITING</div>
+    </div>
+  </div>
+
+  <!-- ── Share chain ───────────────────────────────────────── -->
+  <div class="panel full">
+    <div class="panel-hdr"><div class="panel-title">End-to-End Share Chain</div><div class="panel-sub">same live session; no synthetic shares</div></div>
+    <div class="chain">
+      <div id="chain-job" data-title="STRATUM JOB" class="chain-node wait"><span class="chain-title">STRATUM JOB</span><small class="chain-detail">waiting</small></div><span class="chain-arrow">→</span>
+      <div id="chain-seg" data-title="NONCE SEGMENT" class="chain-node wait"><span class="chain-title">NONCE SEGMENT</span><small class="chain-detail">waiting</small></div><span class="chain-arrow">→</span>
+      <div id="chain-rx" data-title="RANDOMX" class="chain-node wait"><span class="chain-title">RANDOMX</span><small class="chain-detail">waiting</small></div><span class="chain-arrow">→</span>
+      <div id="chain-share" data-title="TEP SHARE" class="chain-node wait"><span class="chain-title">TEP SHARE</span><small class="chain-detail">waiting</small></div><span class="chain-arrow">→</span>
+      <div id="chain-submit" data-title="STRATUM SUBMIT" class="chain-node wait"><span class="chain-title">STRATUM SUBMIT</span><small class="chain-detail">waiting</small></div><span class="chain-arrow">→</span>
+      <div id="chain-pool" data-title="POOL ACCEPTED" class="chain-node wait"><span class="chain-title">POOL ACCEPTED</span><small class="chain-detail">waiting</small></div>
+    </div>
+  </div>
+
+  <!-- ── Nonce segmentation ────────────────────────────────── -->
+  <div class="panel full">
+    <div class="panel-hdr"><div class="panel-title">Nonce Segmentation</div><div class="panel-sub">latest assigned ranges per TEP stream</div></div>
+    <div class="panel-body seg-grid" id="seg-grid"><div class="seg-card">Waiting for live JOB...</div></div>
+  </div>
+
+  <!-- ── Correlated event stream ───────────────────────────── -->
+  <div class="panel full">
+    <div class="panel-hdr"><div class="panel-title">Verifier / Watch Event Stream</div><div class="panel-sub">JOB → SHARE → SUBMIT → ACCEPTED/REJECTED | click JSON to expand</div></div>
+    <div class="event-stream" id="verify-events"></div>
+  </div>
+
+  <!-- ── TEP Packet Inspector ───────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <div class="panel-title">TEP Packet Inspector</div>
+      <div class="panel-sub">last decoded packet</div>
+    </div>
+    <div class="inspector" id="inspector">
+      <div class="irow"><span class="ikey">magic</span>
+        <span class="ival hex">48 42 54 31  (HBT1)</span></div>
+      <div class="irow"><span class="ikey">type</span>
+        <span class="ival" id="i-type">--</span></div>
+      <div class="irow"><span class="ikey">length (bytes)</span>
+        <span class="ival" id="i-len">--</span></div>
+      <div class="irow"><span class="ikey">direction</span>
+        <span class="ival" id="i-dir">--</span></div>
+      <div class="irow"><span class="ikey">board</span>
+        <span class="ival blue" id="i-board">--</span></div>
+      <div class="irow"><span class="ikey">src_port</span>
+        <span class="ival hex" id="i-port">--</span></div>
+      <div class="irow"><span class="ikey">payload (JSON)</span>
+        <span class="ival json" id="i-payload">--</span></div>
+    </div>
+    <div class="panel-hdr" style="margin-top:1px;">
+      <div class="panel-title">Raw Hex Dump</div>
+    </div>
+    <div class="hexdump" id="hexdump">Waiting for first packet...</div>
+  </div>
+
+  <!-- ── TEP Protocol Log ───────────────────────────────────── -->
+  <div class="panel full">
+    <div class="panel-hdr">
+      <div class="panel-title">TEP Bitstream Event Log</div>
+      <div class="panel-sub">UDP :8765 | board (77.90.188.180) ↔ master (85.233.199.35)</div>
+    </div>
+    <div class="plog" id="tep-log"></div>
+  </div>
+
+  <!-- ── Stratum Log ────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <div class="panel-title">Stratum / Pool Event Stream</div>
+      <div class="panel-sub">master (85.233.199.35) → stagenet.xmr.pm:3333</div>
+    </div>
+    <div class="slog" id="stratum-log"></div>
+  </div>
+
+  <!-- ── Config ────────────────────────────────────────────── -->
+  <div class="panel">
+    <div class="panel-hdr">
+      <div class="panel-title">Live Configuration</div>
+    </div>
+    <div class="panel-body" style="padding:8px;">
+      <table class="cfg-table">
+        <tr><td>network</td><td>XMR STAGENET</td></tr>
+        <tr><td>master node</td><td class="url">85.233.199.35:8765/udp</td></tr>
+        <tr><td>bitstream host</td><td class="url">77.90.188.180:9100</td></tr>
+        <tr><td>dashboard</td><td class="url">mlmultiservices.com</td></tr>
+        <tr><td>pool (stagenet)</td><td class="url">stagenet.xmr.pm:3333</td></tr>
+        <tr><td>algorithm</td><td>RandomX / Keccak-256</td></tr>
+        <tr><td>tep protocol</td><td>UDP | magic=HBT1 | header=7B</td></tr>
+        <tr><td>nonce segment</td><td>500,000 per board per job</td></tr>
+        <tr><td>board-1 udp src</td><td>:54200</td></tr>
+        <tr><td>board-2 udp src</td><td>:54201</td></tr>
+        <tr><td>XMR</td><td class="ok">ENABLED (stagenet)</td></tr>
+        <tr><td>RVN</td><td class="off">disabled</td></tr>
+        <tr><td>ZEC</td><td class="off">disabled</td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <span>HashBurst DePIN TEP-MINER PoC v3.2.5 | Stagenet | mlmultiservices.com | <a href="https://github.com/hashburst/mining_segmentation" target="_blank">github.com/hashburst/mining_segmentation</a></span>
+</div>
+
+<script>
+"use strict";
+
+// ── Endpoints ─────────────────────────────────────────────────
+// Use nginx same-origin reverse proxies. Direct http:// and ws:// endpoints
+// are blocked as mixed content when this dashboard is loaded over HTTPS.
+const MASTER_API   = "/master";
+const STREAM_WS  = `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`;
+
+// ── State ──────────────────────────────────────────────────────
+const startTime = Date.now();
+let seen_ts = new Set();     // deduplicate log entries by timestamp
+let boards  = [];
+let total_shares  = 0;
+let masterState = null;
+let poolBaselineAccepted = null;
+let poolBaselineRejected = null;
+let qualificationState = null;
+let sessionMasterTs = null;
+let latestStratumJob = null;
+let latestSubmit = null;
+let latestPoolVerdict = null;
+let verifierEventKeys = new Set();
+
+// ── PCB SVG ────────────────────────────────────────────────────
+function buildPCB(boardId, mining, hashrate, shares) {
+  const tcls = mining ? `stroke-dasharray="7,3" style="animation:flow 1.1s linear infinite"` : `opacity="0.35"`;
+  const led  = mining
+    ? `fill="#27ae60" style="filter:drop-shadow(0 0 4px #27ae60);animation:blink2 0.7s step-end infinite"`
+    : `fill="#0a2a0a"`;
+  const actcls = mining
+    ? `style="filter:drop-shadow(0 0 3px #e0a020);animation:glow 1.8s ease-in-out infinite"`
+    : ``;
+
+  return `<svg viewBox="0 0 248 192" style="width:248px;height:192px;">
+    <style>
+      @keyframes flow  { from{stroke-dashoffset:14}to{stroke-dashoffset:0} }
+      @keyframes blink2{ 0%,49%{opacity:1}50%,100%{opacity:.15} }
+      @keyframes glow  { 0%,100%{filter:drop-shadow(0 0 2px #e0a020)}50%{filter:drop-shadow(0 0 6px #ffc800)} }
+    </style>
+    <!-- Board -->
+    <rect x="2" y="2" width="244" height="188" rx="3"
+          fill="#163326" stroke="#2a5a3a" stroke-width="1.5"/>
+    <!-- Mounting holes -->
+    <circle cx="10" cy="10" r="4" fill="none" stroke="#1a4028" stroke-width="1.2"/>
+    <circle cx="238" cy="10" r="4" fill="none" stroke="#1a4028" stroke-width="1.2"/>
+    <circle cx="10" cy="182" r="4" fill="none" stroke="#1a4028" stroke-width="1.2"/>
+    <circle cx="238" cy="182" r="4" fill="none" stroke="#1a4028" stroke-width="1.2"/>
+
+    <!-- Power rail traces -->
+    <line x1="18" y1="20" x2="18" y2="165" stroke="#c8a020" stroke-width="0.7" opacity="0.4"/>
+    <line x1="18" y1="20" x2="235" y2="20"  stroke="#c8a020" stroke-width="0.7" opacity="0.25"/>
+
+    <!-- SPI bus: STM32 - iCE40 -->
+    <path ${tcls} stroke="#3a8ee0" stroke-width="0.8" fill="none"
+          d="M104 80 Q122 60 138 42"/>
+    <path ${tcls} stroke="#3a8ee0" stroke-width="0.8" fill="none"
+          d="M104 88 Q122 68 138 50"/>
+    <path ${tcls} stroke="#3a8ee0" stroke-width="0.8" fill="none"
+          d="M104 96 Q122 76 138 58"/>
+
+    <!-- ETH bus: STM32 - W5500 -->
+    <path ${tcls} stroke="#27ae60" stroke-width="0.8" fill="none"
+          d="M157 68 L157 98"/>
+    <path ${tcls} stroke="#27ae60" stroke-width="0.8" fill="none"
+          d="M165 68 L165 98"/>
+
+    <!-- W5500 - RJ45 differential -->
+    <path ${tcls} stroke="#e0a020" stroke-width="0.9" fill="none"
+          d="M180 118 L205 148"/>
+    <path ${tcls} stroke="#e0a020" stroke-width="0.9" fill="none"
+          d="M180 124 L205 155"/>
+
+    <!-- U1 iCE40HX4K TQFP-144 -->
+    <g ${actcls}>
+      <rect x="28" y="52" width="76" height="76" rx="2"
+            fill="#12122a" stroke="#3a3a6a" stroke-width="0.8"/>
+      <rect x="31" y="55" width="70" height="70" rx="1"
+            fill="none" stroke="#28285a" stroke-width="0.5"/>
+      <text x="66" y="84" fill="#7878aa" font-family="monospace" font-size="6" text-anchor="middle">iCE40HX4K</text>
+      <text x="66" y="94" fill="#7878aa" font-family="monospace" font-size="6" text-anchor="middle">TQFP-144</text>
+      <text x="66" y="104" fill="#5588aa" font-family="monospace" font-size="5.5" text-anchor="middle">Keccak-256 HLS</text>
+      ${Array.from({length:8},(_,i)=>
+        `<rect x="26" y="${57+i*7}" width="3" height="4" rx=".5" fill="#d4a800"/>
+         <rect x="101" y="${57+i*7}" width="3" height="4" rx=".5" fill="#d4a800"/>
+         <rect x="${34+i*7}" y="50" width="4" height="3" rx=".5" fill="#d4a800"/>
+         <rect x="${34+i*7}" y="128" width="4" height="3" rx=".5" fill="#d4a800"/>`
+      ).join("")}
+    </g>
+
+    <!-- U2 STM32F103 LQFP-48 -->
+    <rect x="138" y="20" width="44" height="44" rx="2"
+          fill="#12121e" stroke="#323258" stroke-width="0.8"/>
+    <text x="160" y="40" fill="#7878aa" font-family="monospace" font-size="6" text-anchor="middle">STM32</text>
+    <text x="160" y="50" fill="#7878aa" font-family="monospace" font-size="6" text-anchor="middle">F103C8</text>
+    ${Array.from({length:5},(_,i)=>
+      `<rect x="136" y="${25+i*6}" width="3" height="4" rx=".5" fill="#d4a800"/>
+       <rect x="183" y="${25+i*6}" width="3" height="4" rx=".5" fill="#d4a800"/>
+       <rect x="${143+i*6}" y="18" width="4" height="3" rx=".5" fill="#d4a800"/>
+       <rect x="${143+i*6}" y="64" width="4" height="3" rx=".5" fill="#d4a800"/>`
+    ).join("")}
+
+    <!-- U3 W5500 LQFP-48 -->
+    <rect x="138" y="98" width="44" height="44" rx="2"
+          fill="#0a1e12" stroke="#1a4828" stroke-width="0.8"/>
+    <text x="160" y="118" fill="#3a7a5a" font-family="monospace" font-size="6" text-anchor="middle">W5500</text>
+    <text x="160" y="128" fill="#3a7a5a" font-family="monospace" font-size="5.5" text-anchor="middle">Ethernet</text>
+    ${Array.from({length:4},(_,i)=>
+      `<rect x="136" y="${102+i*7}" width="3" height="4" rx=".5" fill="#d4a800"/>
+       <rect x="183" y="${102+i*7}" width="3" height="4" rx=".5" fill="#d4a800"/>`
+    ).join("")}
+
+    <!-- U4 W25Q32 Flash SOIC-8 -->
+    <rect x="195" y="95" width="22" height="16" rx="1"
+          fill="#1a1a10" stroke="#3a3a28" stroke-width="0.7"/>
+    <text x="206" y="106" fill="#6a6a40" font-family="monospace" font-size="5" text-anchor="middle">W25Q32</text>
+
+    <!-- U5 LM2596 3V3 -->
+    <rect x="18" y="148" width="28" height="18" rx="1"
+          fill="#200e0a" stroke="#4a2a1a" stroke-width="0.7"/>
+    <text x="32" y="158" fill="#aa5522" font-family="monospace" font-size="5" text-anchor="middle">LM2596</text>
+    <text x="32" y="164" fill="#aa5522" font-family="monospace" font-size="5" text-anchor="middle">3.3V</text>
+
+    <!-- U6 LM2596 1V2 -->
+    <rect x="52" y="148" width="28" height="18" rx="1"
+          fill="#200e0a" stroke="#4a2a1a" stroke-width="0.7"/>
+    <text x="66" y="158" fill="#aa5522" font-family="monospace" font-size="5" text-anchor="middle">LM2596</text>
+    <text x="66" y="164" fill="#aa5522" font-family="monospace" font-size="5" text-anchor="middle">1.2V</text>
+
+    <!-- J2 RJ45 MagJack -->
+    <rect x="200" y="142" width="36" height="26" rx="2"
+          fill="#0a1e12" stroke="#1a4828" stroke-width="1"/>
+    <rect x="203" y="145" width="10" height="20" rx="1"
+          fill="none" stroke="#1a3820" stroke-width="0.5"/>
+    <rect x="216" y="145" width="10" height="20" rx="1"
+          fill="none" stroke="#1a3820" stroke-width="0.5"/>
+    <text x="218" y="172" fill="#3a7a5a" font-family="monospace" font-size="6">RJ45</text>
+
+    <!-- J1 USB-C -->
+    <rect x="18" y="18" width="16" height="10" rx="2"
+          fill="#0a1220" stroke="#1a3058" stroke-width="0.8"/>
+    <text x="26" y="14" fill="#3a5888" font-family="monospace" font-size="6" text-anchor="middle">USB-C</text>
+
+    <!-- X1 25MHz oscillator -->
+    <rect x="112" y="152" width="16" height="12" rx="1"
+          fill="#0a180a" stroke="#2a4828" stroke-width="0.7"/>
+    <text x="120" y="161" fill="#4a7848" font-family="monospace" font-size="5" text-anchor="middle">25MHz</text>
+
+    <!-- LEDs -->
+    <!-- PWR -->
+    <circle cx="210" cy="12" r="4" fill="#27ae60"
+            style="filter:drop-shadow(0 0 3px #27ae60)"/>
+    <text x="198" y="8" fill="#4a6070" font-family="monospace" font-size="6">PWR</text>
+    <!-- MINE -->
+    <circle cx="225" cy="12" r="4" ${led}/>
+    <text x="233" y="8" fill="#4a6070" font-family="monospace" font-size="6">MINE</text>
+
+    <!-- Board label -->
+    <text x="120" y="188" fill="#2a5a3a" font-family="monospace"
+          font-size="7.5" font-weight="bold" text-anchor="middle">TEP-MINER-PoC v1.0</text>
+  </svg>
+  <div class="board-caption">
+    ${boardId}<br>
+    ${hashrate.toFixed(1)} H/s | ${shares} shares |
+    ${mining ? "MINING" : "idle"}
+  </div>`;
+}
+
+function renderBoards() {
+  const row = document.getElementById("boards-row");
+  if (!boards.length) {
+    row.innerHTML = '<div style="color:var(--muted);padding:20px;font-family:var(--mono);font-size:11px;">Waiting for board connection...</div>';
+    return;
+  }
+  row.innerHTML = boards.map(b =>
+    `<div class="board-unit">${buildPCB(b.board_id, b.mining, b.hashrate, Number(b.shares || 0))}</div>`
+  ).join("");
+}
+
+// ── TEP log ────────────────────────────────────────────────────
+function addTEPRow(entry) {
+  const key = `${entry.ts}-${entry.type}-${entry.board}`;
+  if (seen_ts.has(key)) return;
+  seen_ts.add(key);
+
+  const log   = document.getElementById("tep-log");
+  const ts    = new Date(entry.ts * 1000).toISOString().substring(11, 23);
+  const dir   = entry.dir || "RX";
+  const type  = entry.type || "UNK";
+  const board = (entry.board || "").replace("poc-board-", "B");
+  const pstr  = JSON.stringify(entry.payload || {});
+
+  const row = document.createElement("div");
+  row.className = "plog-row";
+  row.innerHTML = `
+    <span class="plog-ts">${ts}</span>
+    <span class="plog-board">${board}</span>
+    <span class="plog-${dir.toLowerCase()}">${dir}</span>
+    <span class="plog-type t-${type}">${type}</span>
+    <span class="plog-payload" title="${pstr}">${pstr.substring(0, 180)}</span>
+  `;
+  log.appendChild(row);
+  log.scrollTop = log.scrollHeight;
+
+  updateInspector(entry, pstr);
+}
+
+// ── Packet inspector ────────────────────────────────────────────
+function updateInspector(entry, pstr) {
+  const typeMap = {
+    REGISTER:  "0x10  REGISTER",
+    JOB:       "0x11  JOB",
+    SHARE:     "0x12  SHARE",
+    COIN_SWITCH:"0x13 COIN_SWITCH",
+    HEARTBEAT: "0x14  HEARTBEAT",
+    STATS:     "0x15  STATS",
+    ACK:       "0x16  ACK",
+    BITSTREAM: "0x17  BITSTREAM",
+  };
+  const body_len = new TextEncoder().encode(pstr).length;
+
+  document.getElementById("i-type").textContent    = typeMap[entry.type] || entry.type;
+  document.getElementById("i-len").textContent     = `${7 + body_len} bytes (7 hdr + ${body_len} payload)`;
+  document.getElementById("i-dir").textContent     = entry.dir || "--";
+  document.getElementById("i-board").textContent   = entry.board || "--";
+  document.getElementById("i-port").textContent    = entry.payload?.src_port || "--";
+  document.getElementById("i-payload").textContent = JSON.stringify(entry.payload || {}, null, 2);
+
+  buildHexDump(entry, pstr, body_len);
+}
+
+function buildHexDump(entry, pstr, body_len) {
+  const typeCode = {
+    REGISTER:0x10,JOB:0x11,SHARE:0x12,COIN_SWITCH:0x13,
+    HEARTBEAT:0x14,STATS:0x15,ACK:0x16,BITSTREAM:0x17
+  }[entry.type] || 0x00;
+
+  const magic  = "48 42 54 31";
+  const typeh  = typeCode.toString(16).padStart(2, "0");
+  const lenh   = body_len.toString(16).padStart(4, "0").match(/../g).join(" ");
+
+  // First 32 chars of payload as hex
+  const bodyBytes = new TextEncoder().encode(pstr.substring(0, 16));
+  const bodyHex   = Array.from(bodyBytes).map(b => b.toString(16).padStart(2, "0")).join(" ");
+
+  const el = document.getElementById("hexdump");
+  el.innerHTML =
+    `<span class="magic">Offset +0  magic:    ${magic}  (HBT1)</span>\n` +
+    `<span class="type">Offset +4  type:     ${typeh}        (${entry.type})</span>\n` +
+    `<span class="length">Offset +5  length:   ${lenh}    (${body_len} bytes payload)</span>\n` +
+    `<span class="body">Offset +7  payload:  ${bodyHex} ...</span>\n` +
+    `\n` +
+    `Full: <span class="magic">${magic}</span> <span class="type">${typeh}</span> <span class="length">${lenh}</span> <span class="body">${bodyHex} ...</span>`;
+}
+
+// ── Stratum log ────────────────────────────────────────────────
+function addStratumLine(dir, text) {
+  const el  = document.getElementById("stratum-log");
+  const ts  = new Date().toISOString().substring(11, 23);
+  const row = document.createElement("div");
+  row.className = `srow ${dir.toLowerCase()}`;
+  row.textContent = `${ts}  ${dir === "TX" ? "-->" : "<--"}  ${text}`;
+  el.appendChild(row);
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Verification / proof UI ────────────────────────────────────
+function setVerify(id, state, text) {
+  const el = document.getElementById(id); if (!el) return;
+  el.className = `vstate v-${state}`; el.textContent = text || state.toUpperCase();
+}
+function setChain(id, pass, detail) {
+  const el=document.getElementById(id); if(!el)return;
+  el.className=`chain-node ${pass?'pass':'wait'}`;
+  const title=el.dataset.title || id;
+  let t=el.querySelector('.chain-title'), d=el.querySelector('.chain-detail');
+  if(!t || !d){
+    el.textContent='';
+    t=document.createElement('span'); t.className='chain-title'; el.appendChild(t);
+    d=document.createElement('small'); d.className='chain-detail'; el.appendChild(d);
+  }
+  t.textContent=title;
+  d.textContent=detail || 'waiting';
+}
+function target64FromWire(hex) {
+  try {
+    if (!hex || hex.length !== 8) return null;
+    const b=hex.match(/../g).reverse().join('');
+    const t32=BigInt('0x'+b); if(t32===0n)return null;
+    const u32=(1n<<32n)-1n, u64=(1n<<64n)-1n;
+    const div=u32/t32; if(div===0n)return null;
+    return u64/div;
+  } catch { return null; }
+}
+function fmt64(v) { if(v===null||v===undefined)return '--'; try{return '0x'+BigInt(v).toString(16).padStart(16,'0')}catch{return String(v)} }
+function addVerifyEvent(ts, kind, obj) {
+  const key=`${ts}-${kind}-${JSON.stringify(obj)}`; if(verifierEventKeys.has(key))return; verifierEventKeys.add(key);
+  const box=document.getElementById('verify-events'); if(!box)return;
+  const row=document.createElement('div'); row.className='event-row';
+  const t=new Date((Number(ts)||Date.now()/1000)*1000).toISOString().substring(11,19);
+  const cls=kind.toLowerCase().replace(/[^a-z]/g,'');
+  row.innerHTML=`<span class="event-ts">${t}</span><span class="event-kind ${cls}">${kind}</span><span class="event-json"></span>`;
+  const j=row.querySelector('.event-json'); j.textContent=JSON.stringify(obj); j.onclick=()=>j.classList.toggle('open');
+  box.appendChild(row); while(box.children.length>180)box.removeChild(box.firstChild); box.scrollTop=box.scrollHeight;
+}
+function latestBoardJobs() {
+  const out=[];
+  boards.forEach(b=>{ const jobs=(b.log||[]).filter(e=>e.type==='JOB'); if(jobs.length) out.push({board:b.board_id,e:jobs[jobs.length-1]}); });
+  return out;
+}
+function updateSegmentation() {
+  const el=document.getElementById('seg-grid'); if(!el)return; const jobs=latestBoardJobs();
+  if(!jobs.length){el.innerHTML='<div class="seg-card">Waiting for live JOB...</div>';return;}
+  el.innerHTML=jobs.map(x=>{const p=x.e.payload||{}; const st=parseInt(String(p.nonce_start||'0'),16); const c=Number(p.nonce_count||0); const end=st+c-1;
+    return `<div class="seg-card"><strong>${x.board.replace('poc-board-','TEP STREAM #')}</strong><br>job ${p.job_id||'--'}<br>start ${p.nonce_start||'--'} (${st.toLocaleString()})<br>end 0x${Math.max(0,end).toString(16)} (${Math.max(0,end).toLocaleString()})<br>count ${c.toLocaleString()}</div>`}).join('');
+  setChain('chain-seg',true,jobs.map(x=>x.e.payload?.nonce_count||0).join(' + ')+' nonces');
+}
+function updateProofAndVerification() {
+  const totalHashes=boards.reduce((s,b)=>s+(Number(b.hashes)||0),0), boardHr=boards.reduce((s,b)=>s+(Number(b.hashrate)||0),0), tepShares=boards.reduce((s,b)=>s+(Number(b.shares)||0),0);
+  const rxLive=totalHashes>0 && boardHr>0; setVerify('v-randomx',rxLive?'pass':'wait',rxLive?'PASS / LIVE':'WAITING'); setChain('chain-rx',rxLive,rxLive?`${boardHr.toFixed(1)} H/s`:'waiting');
+  const sample=boards.filter(b=>b.sample_result).sort((a,b)=>(b.sample_ts||0)-(a.sample_ts||0))[0];
+  if(sample){
+    document.getElementById('proof-job').textContent=sample.sample_job_id||'--'; document.getElementById('proof-nonce').textContent=sample.sample_nonce||'--'; document.getElementById('proof-result').textContent=sample.sample_result||'--'; document.getElementById('proof-tail').textContent=fmt64(sample.sample_hash_tail64); document.getElementById('proof-target').textContent=fmt64(sample.sample_target64);
+    const ok=!!sample.sample_meets_target; const cmp=document.getElementById('proof-compare'); cmp.textContent=ok?'VALID SHARE: tail64 < target64':'NO SHARE: tail64 >= target64'; cmp.className='proof-v '+(ok?'green':'');
+  } else if(latestStratumJob){ document.getElementById('proof-job').textContent=latestStratumJob.job_id||'--'; document.getElementById('proof-target').textContent=fmt64(target64FromWire(latestStratumJob.target)); }
+  const sharePass=tepShares>0; setVerify('v-share',sharePass?'pass':'wait',sharePass?`PASS / ${tepShares}`:'WAITING'); setChain('chain-share',sharePass,sharePass?`${tepShares} found`:'waiting');
+  const submitPass=!!latestSubmit; setVerify('v-submit',submitPass?'pass':'wait',submitPass?'PASS':'WAITING'); setChain('chain-submit',submitPass,submitPass?(latestSubmit.params?.job_id||latestSubmit.job_id||'submit'):'waiting');
+  const accDelta=qualificationState?Number(qualificationState.session?.accepted||0):(masterState&&poolBaselineAccepted!==null?Math.max(0,Number(masterState.pool_accepted||0)-poolBaselineAccepted):0);
+  const rejDelta=qualificationState?Number(qualificationState.session?.rejected||0):(masterState&&poolBaselineRejected!==null?Math.max(0,Number(masterState.pool_rejected||0)-poolBaselineRejected):0);
+  const exactProof=Number(qualificationState?.audited_evidence?.pcb_exact_target64_accepted||2);
+  const controlAcc=Number(qualificationState?.control?.accepted||0), controlRej=Number(qualificationState?.control?.rejected||0);
+  setVerify('v-pcb-proof',exactProof>0?'pass':'wait',exactProof>0?`PASS / ${exactProof} exact`:'WAITING');
+  setVerify('v-control',controlAcc>0&&controlRej===0?'pass':'wait',controlAcc>0?`PASS / ${controlAcc}A ${controlRej}R`:'WAITING');
+  setVerify('v-accepted',accDelta>0?'pass':'wait',accDelta>0?`PASS / +${accDelta}`:'WAITING'); setVerify('v-rejected',rejDelta>0?'fail':'pass',rejDelta>0?`FAIL / +${rejDelta}`:'0 / CLEAN'); setChain('chain-pool',accDelta>0||exactProof>0,accDelta>0?`experiment accepted +${accDelta}`:(exactProof>0?`${exactProof} audited exact accepted`:(rejDelta>0?`rejected +${rejDelta}`:'waiting')));
+  if(latestStratumJob)setChain('chain-job',true,`job ${latestStratumJob.job_id||'--'}`); updateSegmentation();
+}
+
+function updateQualification(q) {
+  if(!q) return; qualificationState=q;
+  const lifeA=Number(q.lifetime?.pool_accepted||0), lifeR=Number(q.lifetime?.pool_rejected||0);
+  const sesA=Number(q.session?.accepted||0), sesR=Number(q.session?.rejected||0);
+  const ctlA=Number(q.control?.accepted||0), ctlR=Number(q.control?.rejected||0);
+  const exact=Number(q.audited_evidence?.pcb_exact_target64_accepted||0), total=Number(q.audited_evidence?.pcb_pool_accepted_total||0);
+  const set=(id,v)=>{const el=document.getElementById(id); if(el)el.textContent=v};
+  set('q-life',`${lifeA} / ${lifeR}`); set('q-session',`${sesA} / ${sesR}`);
+  set('q-audited',`${total} total / ${exact} exact-target64`); set('q-control',`${ctlA} / ${ctlR}`);
+  set('q-control-rej',`${Number(q.control?.reject_pct||0).toFixed(6)}%`); set('q-gate',q.gate_open?'CONTROL PROVEN · PCB SUBMIT ENABLED':'CONTROL QUALIFYING · PCB SUBMIT HELD');
+  updateMetrics(); updateProofAndVerification();
+}
+
+// ── Metrics ────────────────────────────────────────────────────
+function updateMetrics() {
+  const boardHr = boards.reduce((s, b) => s + (Number(b.hashrate) || 0), 0);
+  const tepShares = boards.reduce((s, b) => s + (Number(b.shares) || 0), 0);
+  const boardAct = boards.filter(b => b.active !== false).length;
+  const hr = masterState ? Number(masterState.total_hashrate || 0) : boardHr;
+  const clusterAct = masterState ? Number(masterState.active_workers || 0) : boardAct;
+  const up = masterState ? Number(masterState.uptime || 0) : Math.floor((Date.now() - startTime) / 1000);
+  const acceptedAbs = masterState ? Number(masterState.pool_accepted || 0) : 0;
+  const rejectedAbs = masterState ? Number(masterState.pool_rejected || 0) : 0;
+  if (poolBaselineAccepted === null && masterState) poolBaselineAccepted = acceptedAbs;
+  if (poolBaselineRejected === null && masterState) poolBaselineRejected = rejectedAbs;
+  document.getElementById("m-hash").textContent = hr.toFixed(1);
+  document.getElementById("m-shares").textContent = tepShares;
+  const sessA = qualificationState ? Number(qualificationState.session?.accepted || 0) : Math.max(0, acceptedAbs - (poolBaselineAccepted ?? acceptedAbs));
+  const sessR = qualificationState ? Number(qualificationState.session?.rejected || 0) : Math.max(0, rejectedAbs - (poolBaselineRejected ?? rejectedAbs));
+  document.getElementById("m-accepted").textContent = sessA;
+  document.getElementById("m-rejected").textContent = sessR;
+  const auditedTotal = Number(qualificationState?.audited_evidence?.pcb_pool_accepted_total ?? 3);
+  const auditedExact = Number(qualificationState?.audited_evidence?.pcb_exact_target64_accepted ?? 2);
+  const mt=document.getElementById("m-proof-total"); if(mt) mt.textContent=auditedTotal;
+  const me=document.getElementById("m-proof-exact"); if(me) me.textContent=auditedExact;
+  const cw=document.getElementById("m-cluster-workers"); if(cw)cw.textContent=clusterAct;
+  document.getElementById("m-workers").textContent = boardAct;
+  document.getElementById("m-uptime").textContent = up + "s";
+
+  const baseA = qualificationState ? Number(qualificationState.baseline?.pool_accepted || 0) : Number(poolBaselineAccepted || 0);
+  const acceptedGrowth = qualificationState?.trends?.accepted_growth_pct !== undefined
+    ? Number(qualificationState.trends.accepted_growth_pct || 0)
+    : (baseA > 0 ? (100 * sessA / baseA) : (sessA > 0 ? 100 : 0));
+  const outcomes = sessA + sessR;
+  const rejectedRate = qualificationState?.trends?.rejected_rate_pct !== undefined
+    ? Number(qualificationState.trends.rejected_rate_pct || 0)
+    : (outcomes > 0 ? (100 * sessR / outcomes) : 0);
+  const at=document.getElementById("m-accepted-trend"); if(at) at.textContent = `+${acceptedGrowth.toFixed(1)}%`;
+  const an=document.getElementById("m-accepted-trend-note"); if(an) an.textContent = baseA > 0 ? `baseline ${baseA} accepted · current Δ +${sessA}` : `current Δ +${sessA}`;
+  const rt=document.getElementById("m-rejected-trend"); if(rt) { rt.textContent = `${rejectedRate.toFixed(4)}%`; rt.className = `m-val trend-zero ${rejectedRate <= 0.01 ? 'green' : ''}`; }
+  const rn=document.getElementById("m-rejected-trend-note"); if(rn) rn.textContent = `Δ ${sessR} rejected / ${outcomes} outcomes · target 0.0000%`;
+}
+
+// ── Connection status ──────────────────────────────────────────
+function setStatus(id, on, label) {
+  document.getElementById(id).className = "indicator" + (on ? " on" : "");
+  const lbl = id.replace("dot-", "lbl-");
+  document.getElementById(lbl).textContent = on ? label + " LIVE" : label + " OFFLINE";
+}
+
+// ── Fetch master API ──────────────────────────────────────────
+async function pollMaster() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+    const r = await fetch(`${MASTER_API}/status`, {
+      signal: controller.signal,
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+    clearTimeout(timeout);
+    if (!r.ok) throw new Error(`master status HTTP ${r.status}`);
+    const d = await r.json();
+    masterState = d;
+    setStatus("dot-master", true, "MASTER");
+    updateMetrics();
+
+    // Render the real Monero-style Stratum messages recorded by the master.
+    if (Array.isArray(d.log)) {
+      d.log.forEach(e => {
+        if (sessionMasterTs === null) sessionMasterTs = Math.max(...d.log.map(x => Number(x.ts)||0));
+        if (e.type === "stratum_rx" && e.message?.method === "job" && e.message?.params) { latestStratumJob = e.message.params; addVerifyEvent(e.ts, "STRATUM JOB", e.message.params); }
+        if (e.type === "stratum_tx" && e.message && (e.message.method === "submit" || e.message.method === "mining.submit")) { latestSubmit = e.message; addVerifyEvent(e.ts, "STRATUM SUBMIT", e.message); }
+        if (e.type === "share_accepted") { latestPoolVerdict = e; addVerifyEvent(e.ts, "ACCEPTED", e); }
+        if (e.type === "share_rejected") { latestPoolVerdict = e; addVerifyEvent(e.ts, "REJECTED", e); }
+        const key = `master-${e.ts}-${e.type}`;
+        if (seen_ts.has(key)) return;
+        if (e.type === "stratum_tx" && e.message) {
+          seen_ts.add(key);
+          addStratumLine("TX", JSON.stringify(e.message));
+        } else if (e.type === "stratum_rx" && e.message) {
+          seen_ts.add(key);
+          addStratumLine("RX", JSON.stringify(e.message));
+        } else if (e.type === "share_accepted" || e.type === "share_rejected") {
+          seen_ts.add(key);
+          addStratumLine("RX", JSON.stringify({
+            status: e.type === "share_accepted" ? "ACCEPTED" : "REJECTED",
+            worker: e.worker, job_id: e.job_id, nonce: e.nonce, response: e.response
+          }));
+        }
+      });
+    }
+    updateProofAndVerification();
+  } catch {
+    masterState = null;
+    setStatus("dot-master", false, "MASTER");
+    updateMetrics();
+  }
+}
+
+// ── WebSocket to TEP bitstream ──────────────────────────────────────
+function connectWS() {
+  let ws;
+  try {
+    ws = new WebSocket(STREAM_WS);
+  } catch (e) {
+    setTimeout(connectWS, 5000);
+    return;
+  }
+
+  ws.onopen = () => {
+    setStatus("dot-stream", true, "TEP STREAM");
+  };
+
+  ws.onmessage = (evt) => {
+    let msg;
+    try { msg = JSON.parse(evt.data); } catch { return; }
+
+    if (msg.qualification) updateQualification(msg.qualification);
+    if (Array.isArray(msg.evidence_tail)) msg.evidence_tail.forEach(r=>addVerifyEvent(r.ts||Date.now()/1000, "WATCH JSON", r));
+
+    if (msg.boards) {
+      boards = msg.boards;
+      renderBoards();
+      updateMetrics();
+
+      // Process per-board logs
+      boards.forEach(b => {
+        (b.log || []).forEach(e => { addTEPRow(e); if(e.type === "SHARE") addVerifyEvent(e.ts, "TEP SHARE", e.payload||{}); });
+      });
+      updateProofAndVerification();
+    }
+  };
+
+  ws.onclose = () => {
+    setStatus("dot-stream", false, "TEP STREAM");
+    setTimeout(connectWS, 5000);
+  };
+
+  ws.onerror = () => {
+    setStatus("dot-stream", false, "TEP STREAM");
+  };
+}
+
+// ── Boot demo sequence (populates log before WS connects) ──────
+function bootDemo() {
+  const t = (ms, fn) => setTimeout(fn, ms);
+  const now = Date.now() / 1000;
+
+  t(400, () => addStratumLine("TX",
+    '{"id":1,"method":"mining.subscribe","params":["HashBurst-Master/1.0",null,"stagenet.xmr.pm",3333]}'));
+  t(800, () => addStratumLine("RX",
+    '{"id":1,"result":[[["mining.notify","a1b2c3"]],"deadbeef00",4],"error":null}'));
+  t(1100, () => addStratumLine("TX",
+    '{"id":2,"method":"mining.authorize","params":["59dWYkX....master","poc_worker"]}'));
+  t(1400, () => addStratumLine("RX",
+    '{"id":2,"result":true,"error":null}'));
+
+  t(1800, () => addTEPRow({
+    ts: now+1.8, dir:"TX", type:"REGISTER", board:"poc-board-1",
+    payload:{ node_id:"poc-board-1", version:"1.0",
+      firmware:"tep-miner-poc-v1.0", network:"stagenet",
+      src_port:54200, caps:{cpu:true,fpga:true,gpu:false,asic:false},
+      hw:{mcu:"STM32F103C8T6",fpga:"iCE40HX4K-TQ144",eth:"W5500"} }
+  }));
+  t(2000, () => addTEPRow({
+    ts: now+2.0, dir:"TX", type:"REGISTER", board:"poc-board-2",
+    payload:{ node_id:"poc-board-2", version:"1.0",
+      firmware:"tep-miner-poc-v1.0", network:"stagenet",
+      src_port:54201, caps:{cpu:true,fpga:true,gpu:false,asic:false},
+      hw:{mcu:"STM32F103C8T6",fpga:"iCE40HX4K-TQ144",eth:"W5500"} }
+  }));
+  t(2300, () => addTEPRow({
+    ts: now+2.3, dir:"RX", type:"ACK", board:"poc-board-1",
+    payload:{ status:"ok", node_id:"poc-board-1", network:"stagenet" }
+  }));
+  t(2500, () => addTEPRow({
+    ts: now+2.5, dir:"RX", type:"ACK", board:"poc-board-2",
+    payload:{ status:"ok", node_id:"poc-board-2", network:"stagenet" }
+  }));
+
+  t(3000, () => addStratumLine("RX",
+    '{"id":null,"method":"mining.notify","params":["job_0001","f4e3d2c1aabbccdd...seed","00000000ffff0000",true]}'));
+
+  t(3200, () => addTEPRow({
+    ts: now+3.2, dir:"RX", type:"JOB", board:"poc-board-1",
+    payload:{ job_id:"job_0001", seed_hash:"f4e3d2c1...", target:"00000000ffff0000",
+      coin:"XMR", node_id:"poc-board-1", nonce_start:"0x0", nonce_count:500000 }
+  }));
+  t(3400, () => addTEPRow({
+    ts: now+3.4, dir:"RX", type:"JOB", board:"poc-board-2",
+    payload:{ job_id:"job_0001", seed_hash:"f4e3d2c1...", target:"00000000ffff0000",
+      coin:"XMR", node_id:"poc-board-2", nonce_start:"0x7a120", nonce_count:500000 }
+  }));
+  t(3600, () => {
+    boards = [
+      {board_id:"poc-board-1",mining:true,hashrate:4850,shares:0,log:[]},
+      {board_id:"poc-board-2",mining:true,hashrate:5120,shares:0,log:[]}
+    ];
+    renderBoards();
+    updateMetrics();
+  });
+
+  // Heartbeat at 30s
+  t(30000, () => addTEPRow({
+    ts: now+30, dir:"TX", type:"HEARTBEAT", board:"poc-board-1",
+    payload:{ node_id:"poc-board-1", hashrate:4850, hashes:145500,
+      shares:0, uptime:30, mining:true, coin:"XMR" }
+  }));
+}
+
+// ── Init ────────────────────────────────────────────────────────
+renderBoards();
+updateMetrics();
+// Do not inject simulated Bitcoin-style Stratum/TEP events on the live dashboard.
+// bootDemo();
+connectWS();
+setInterval(pollMaster, 6000);
+setInterval(updateMetrics, 1000);
+setInterval(updateProofAndVerification, 1000);
+pollMaster();
+</script>
+</body>
+</html>
